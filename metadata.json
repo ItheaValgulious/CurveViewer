@@ -1,0 +1,5 @@
+{
+  "name": "3D Curve Sculptor",
+  "description": "A high-performance 3D curve renderer allowing users to plot, manage, and visualize spatial paths from CSV data with full orbital camera controls.",
+  "requestFramePermissions": []
+}
