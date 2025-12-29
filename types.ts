@@ -7,6 +7,13 @@ export interface Point3D {
   z: number;
 }
 
+export interface FitParams {
+  a: number;
+  b: number;
+  c: number;
+  equation: string;
+}
+
 export interface CurveData {
   id: string;
   name: string;
@@ -14,6 +21,7 @@ export interface CurveData {
   color: string;
   visible: boolean;
   thickness: number;
+  fit?: FitParams;
 }
 
 export interface AppState {

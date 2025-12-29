@@ -21,9 +21,15 @@ const App: React.FC = () => {
     ));
   }, []);
 
+  const handleUpdateCurve = useCallback((updatedCurve: CurveData) => {
+    setCurves(prev => prev.map(c => 
+      c.id === updatedCurve.id ? updatedCurve : c
+    ));
+  }, []);
+
   return (
     <div className="relative w-full h-full flex overflow-hidden font-sans text-slate-100">
-      {/* 3D Scene - Occupies full background */}
+      {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
         <Scene curves={curves} />
       </div>
@@ -34,13 +40,14 @@ const App: React.FC = () => {
         onAddCurve={handleAddCurve}
         onRemoveCurve={handleRemoveCurve}
         onToggleVisibility={handleToggleVisibility}
+        onUpdateCurve={handleUpdateCurve}
       />
       
-      {/* Coordinate Tooltip in bottom right */}
+      {/* Status Bar */}
       <div className="absolute bottom-4 right-4 z-10 pointer-events-none">
         <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-1.5">
-          <p className="text-[10px] font-mono text-slate-400 tracking-wider">
-            GRID: 1.0 UNIT / CELL
+          <p className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
+            Fit Mode: z = ay² + by + c (YZ Plane)
           </p>
         </div>
       </div>
