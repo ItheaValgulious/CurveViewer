@@ -1,5 +1,6 @@
 
 import { Point3D, FitParams } from '../types';
+import * as THREE from 'three';
 
 export const parseCSVPoints = (input: string): Point3D[] => {
   const lines = input.trim().split(/\r?\n/);
@@ -23,6 +24,11 @@ export const getRandomColor = (): string => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
+export const getOppositeColor = (hex: string): string => {
+  const color = new THREE.Color(hex);
+  return `#${new THREE.Color(1 - color.r, 1 - color.g, 1 - color.b).getHexString()}`;
+};
+
 export const generateId = (): string => {
   return Math.random().toString(36).substring(2, 9);
 };
@@ -39,7 +45,6 @@ export const fitParabola = (points: Point3D[]): FitParams | null => {
   let sumZ = 0, sumYZ = 0, sumY2Z = 0;
 
   for (const p of points) {
-    // 忽略 x，基于 y 拟合 z
     const y = p.y;
     const z = p.z;
     const y2 = y * y;
@@ -51,11 +56,6 @@ export const fitParabola = (points: Point3D[]): FitParams | null => {
     sumYZ += y * z;
     sumY2Z += y2 * z;
   }
-
-  // 求解正规方程组的系数矩阵 (基于 y 的幂):
-  // [ sumY4  sumY3  sumY2 ] [ a ]   [ sumY2Z ]
-  // [ sumY3  sumY2  sumY  ] [ b ] = [ sumYZ  ]
-  // [ sumY2  sumY   n     ] [ c ]   [ sumZ   ]
 
   const det = (
     sumY4 * (sumY2 * n - sumY * sumY) -

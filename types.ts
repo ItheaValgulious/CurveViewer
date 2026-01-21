@@ -21,6 +21,7 @@ export interface CurveData {
   color: string;
   visible: boolean;
   thickness: number;
+  gradientEnabled?: boolean; // 新增：是否启用颜色渐变
   fit?: FitParams;
 }
 

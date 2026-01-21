@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Eye, EyeOff, Activity, Info, ChevronDown, ChevronUp, Sigma, FunctionSquare } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Activity, Info, ChevronDown, ChevronUp, Sigma, FunctionSquare, Palette } from 'lucide-react';
 import { CurveData } from '../types';
 import { parseCSVPoints, getRandomColor, generateId, fitParabola } from '../utils/helpers';
 
@@ -14,7 +14,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, onToggleVisibility, onUpdateCurve }) => {
   const [csvInput, setCsvInput] = useState<string>("0,0,0\n0,1,1.5\n0,2,4.2\n0,3,8.9\n0,4,16.1\n0,5,25.3");
-  const [curveName, setCurveName] = useState<string>("YZ 平面拟合 (z=f(y))");
+  const [curveName, setCurveName] = useState<string>("渐变实验曲线");
   const [isExpanded, setIsExpanded] = useState(true);
 
   const handleAdd = () => {
@@ -31,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
       color: getRandomColor(),
       visible: true,
       thickness: 2,
+      gradientEnabled: false,
     };
 
     onAddCurve(newCurve);
@@ -45,6 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
     } else {
       alert("无法拟合，请检查 Y 轴坐标是否有效。");
     }
+  };
+
+  const toggleGradient = (curve: CurveData) => {
+    onUpdateCurve({ ...curve, gradientEnabled: !curve.gradientEnabled });
   };
 
   return (
@@ -71,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
                 type="text"
                 value={curveName}
                 onChange={(e) => setCurveName(e.target.value)}
-                placeholder="例如：z=f(y) 轨迹"
+                placeholder="例如：渐变轨迹"
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
               />
             </div>
@@ -79,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 flex justify-between">
                 <span>CSV 数据 (x, y, z)</span>
-                <Info className="w-3 h-3 cursor-help" title="输入每行一个点的坐标，拟合将忽略 x 并计算 z = ay² + by + c。" />
+                <Info className="w-3 h-3 cursor-help" title="输入每行一个点的坐标，逗号分隔。" />
               </label>
               <textarea 
                 rows={5}
@@ -118,19 +123,36 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
                 className="group flex flex-col gap-1 p-2 bg-slate-800/40 hover:bg-slate-800 border border-transparent hover:border-slate-700 rounded-lg transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: curve.color }} />
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: curve.color }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-slate-200 text-sm font-medium truncate">{curve.name}</p>
-                    <p className="text-slate-500 text-[10px] uppercase">{curve.points.length} Pts</p>
+                    <p className="text-slate-500 text-[10px] uppercase">{curve.points.length} 采样点</p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleFit(curve)} title="拟合 z = ay² + by + c" className="p-1.5 text-sky-400 hover:text-sky-300">
+                    <button 
+                      onClick={() => handleFit(curve)} 
+                      title="拟合 z = f(y)" 
+                      className="p-1.5 text-sky-400 hover:text-sky-300"
+                    >
                       <Sigma className="w-4 h-4" />
                     </button>
-                    <button onClick={() => onToggleVisibility(curve.id)} className="p-1.5 text-slate-400 hover:text-white">
+                    <button 
+                      onClick={() => toggleGradient(curve)} 
+                      title="开启颜色渐变" 
+                      className={`p-1.5 transition-colors ${curve.gradientEnabled ? 'text-amber-400' : 'text-slate-400 hover:text-white'}`}
+                    >
+                      <Palette className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => onToggleVisibility(curve.id)} 
+                      className="p-1.5 text-slate-400 hover:text-white"
+                    >
                       {curve.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => onRemoveCurve(curve.id)} className="p-1.5 text-rose-400/70 hover:text-rose-400">
+                    <button 
+                      onClick={() => onRemoveCurve(curve.id)} 
+                      className="p-1.5 text-rose-400/70 hover:text-rose-400"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -140,9 +162,6 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
                     <div className="flex items-center gap-2 text-sky-300 text-[10px] font-mono">
                       <FunctionSquare className="w-3 h-3" />
                       <span>{curve.fit.equation}</span>
-                    </div>
-                    <div className="text-slate-400 text-[9px] mt-0.5">
-                      a 系数: <span className="text-emerald-400 font-bold">{curve.fit.a.toFixed(6)}</span>
                     </div>
                   </div>
                 )}
@@ -154,8 +173,8 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
       
       <div className="bg-sky-900/20 backdrop-blur-sm border border-sky-500/20 rounded-xl p-3 shadow-xl">
         <p className="text-sky-300/80 text-[10px] leading-relaxed">
-          <span className="font-bold uppercase tracking-widest text-[9px] block mb-1">YZ 拟合模型</span>
-          计算 $z = ay^2 + by + c$。适用于在 $x=0$ 平面内研究受重力或偏向力影响的运动轨迹。
+          <span className="font-bold uppercase tracking-widest text-[9px] block mb-1">提示</span>
+          使用 <Palette className="inline w-3 h-3 mx-1"/> 开启顺序色彩渐变（从原色渐变为补色）。
         </p>
       </div>
     </div>
