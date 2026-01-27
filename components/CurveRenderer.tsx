@@ -14,13 +14,10 @@ const CurveRenderer: React.FC<CurveRendererProps> = ({ curve }) => {
     return curve.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
   }, [curve.points]);
 
-  // 计算每个点的颜色
   const vertexColors = useMemo(() => {
     if (!curve.gradientEnabled) return null;
-    
     const baseColor = new THREE.Color(curve.color);
     const targetColor = new THREE.Color(getOppositeColor(curve.color));
-    
     return points.map((_, i) => {
       const t = i / (points.length - 1);
       return baseColor.clone().lerp(targetColor, t);
@@ -30,18 +27,28 @@ const CurveRenderer: React.FC<CurveRendererProps> = ({ curve }) => {
   const fitPoints = useMemo(() => {
     if (!curve.fit || curve.points.length < 2) return null;
     
-    const yCoords = curve.points.map(p => p.y);
-    const minY = Math.min(...yCoords);
-    const maxY = Math.max(...yCoords);
-    const range = maxY - minY;
+    const { a, b, c, centroid, basisU, basisW, uRange } = curve.fit;
+    const [mx, my, mz] = centroid;
+    const [ux, uy, uz] = basisU;
+    const [wx, wy, wz] = basisW;
+    
+    const minU = uRange[0];
+    const maxU = uRange[1];
+    const range = maxU - minU;
     const padding = range * 0.2 || 1.0; 
     
     const result: THREE.Vector3[] = [];
-    const steps = 60;
+    const steps = 80;
     for (let i = 0; i <= steps; i++) {
-      const y = (minY - padding) + (i / steps) * (range + 2 * padding);
-      const z = curve.fit.a * y * y + curve.fit.b * y + curve.fit.c;
-      result.push(new THREE.Vector3(0, y, z));
+      const u = (minU - padding) + (i / steps) * (range + 2 * padding);
+      const w = a * u * u + b * u + c;
+      
+      // 空间变换: P = Centroid + u*BasisU + w*BasisW
+      const px = mx + u * ux + w * wx;
+      const py = my + u * uy + w * wy;
+      const pz = mz + u * uz + w * wz;
+      
+      result.push(new THREE.Vector3(px, py, pz));
     }
     return result;
   }, [curve.fit, curve.points]);
@@ -50,7 +57,6 @@ const CurveRenderer: React.FC<CurveRendererProps> = ({ curve }) => {
 
   return (
     <group>
-      {/* 原始数据曲线 */}
       <Line
         points={points}
         color={curve.gradientEnabled ? undefined : curve.color}
@@ -59,7 +65,6 @@ const CurveRenderer: React.FC<CurveRendererProps> = ({ curve }) => {
         dashed={false}
       />
       
-      {/* 拟合出的抛物线 (z = f(y), x = 0) */}
       {fitPoints && (
         <Line
           points={fitPoints}
@@ -69,27 +74,19 @@ const CurveRenderer: React.FC<CurveRendererProps> = ({ curve }) => {
           dashSize={0.4}
           gapSize={0.2}
           transparent
-          opacity={0.6}
+          opacity={0.4}
         />
       )}
       
-      {/* 顶点标记及序号 */}
       {points.map((p, i) => {
         const pointColor = vertexColors ? vertexColors[i] : new THREE.Color(curve.color);
         const sphereSize = curve.thickness * 0.025;
-        
         return (
           <group key={i} position={p}>
-            <mesh shadowBlur={1}>
+            <mesh>
               <sphereGeometry args={[sphereSize, 12, 12]} />
-              <meshStandardMaterial 
-                color={pointColor} 
-                emissive={pointColor} 
-                emissiveIntensity={0.6} 
-              />
+              <meshStandardMaterial color={pointColor} emissive={pointColor} emissiveIntensity={0.6} />
             </mesh>
-            
-            {/* 仅在渐变模式开启时显示极小的序号 */}
             {curve.gradientEnabled && (
               <Text
                 position={[0, sphereSize * 1.5, 0]}

@@ -12,6 +12,11 @@ export interface FitParams {
   b: number;
   c: number;
   equation: string;
+  // 新增：空间拟合元数据
+  centroid: [number, number, number];
+  basisU: [number, number, number];
+  basisW: [number, number, number];
+  uRange: [number, number];
 }
 
 export interface CurveData {
@@ -21,7 +26,7 @@ export interface CurveData {
   color: string;
   visible: boolean;
   thickness: number;
-  gradientEnabled?: boolean; // 新增：是否启用颜色渐变
+  gradientEnabled?: boolean;
   fit?: FitParams;
 }
 

@@ -29,12 +29,10 @@ const App: React.FC = () => {
 
   return (
     <div className="relative w-full h-full flex overflow-hidden font-sans text-slate-100">
-      {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
         <Scene curves={curves} />
       </div>
 
-      {/* UI Overlay */}
       <Sidebar 
         curves={curves} 
         onAddCurve={handleAddCurve}
@@ -43,11 +41,13 @@ const App: React.FC = () => {
         onUpdateCurve={handleUpdateCurve}
       />
       
-      {/* Status Bar */}
       <div className="absolute bottom-4 right-4 z-10 pointer-events-none">
-        <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-1.5">
+        <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-1.5 flex flex-col items-end">
           <p className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
-            Fit Mode: z = ay² + by + c (YZ Plane)
+            Fit: PCA Spatial Best-Fit Plane
+          </p>
+          <p className="text-[9px] font-mono text-slate-500 tracking-tight">
+            Support: space/comma delimited data
           </p>
         </div>
       </div>

@@ -13,14 +13,14 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, onToggleVisibility, onUpdateCurve }) => {
-  const [csvInput, setCsvInput] = useState<string>("0,0,0\n0,1,1.5\n0,2,4.2\n0,3,8.9\n0,4,16.1\n0,5,25.3");
-  const [curveName, setCurveName] = useState<string>("渐变实验曲线");
+  const [csvInput, setCsvInput] = useState<string>("0 0 0\n1 2 1.5\n2 4 4.2\n3 6 8.9\n4 8 16.1");
+  const [curveName, setCurveName] = useState<string>("空间最佳拟合轨迹");
   const [isExpanded, setIsExpanded] = useState(true);
 
   const handleAdd = () => {
     const points = parseCSVPoints(csvInput);
     if (points.length < 2) {
-      alert("请提供至少2个有效坐标点 (x, y, z 格式)。");
+      alert("请提供至少2个有效坐标点。支持空格或逗号分隔。");
       return;
     }
 
@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
     if (result) {
       onUpdateCurve({ ...curve, fit: result });
     } else {
-      alert("无法拟合，请检查 Y 轴坐标是否有效。");
+      alert("拟合失败，请确保点在空间中分布有效。");
     }
   };
 
@@ -60,10 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
             <Activity className="w-5 h-5 text-sky-400" />
             <h1 className="text-slate-100 font-bold tracking-tight">3D 曲线渲染器</h1>
           </div>
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
+          <button onClick={() => setIsExpanded(!isExpanded)} className="text-slate-400 hover:text-white transition-colors">
             {isExpanded ? <ChevronUp /> : <ChevronDown />}
           </button>
         </div>
@@ -76,21 +73,21 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
                 type="text"
                 value={curveName}
                 onChange={(e) => setCurveName(e.target.value)}
-                placeholder="例如：渐变轨迹"
+                placeholder="名称..."
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
               />
             </div>
             
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 flex justify-between">
-                <span>CSV 数据 (x, y, z)</span>
-                <Info className="w-3 h-3 cursor-help" title="输入每行一个点的坐标，逗号分隔。" />
+                <span>坐标数据 (X Y Z)</span>
+                <Info className="w-3 h-3 cursor-help" title="支持空格、逗号或制表符分隔。拟合将计算空间最佳平面。" />
               </label>
               <textarea 
                 rows={5}
                 value={csvInput}
                 onChange={(e) => setCsvInput(e.target.value)}
-                placeholder="0, 0, 0&#10;0, 1, 1.5&#10;0, 2, 4..."
+                placeholder="0 0 0&#10;1 2 1.5&#10;2 4 4..."
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/50 resize-none"
               />
             </div>
@@ -107,59 +104,40 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
       </div>
 
       <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl flex-1 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-          <h2 className="text-slate-100 font-semibold text-sm">已激活曲线 ({curves.length})</h2>
+        <div className="p-4 border-b border-slate-700">
+          <h2 className="text-slate-100 font-semibold text-sm">曲线管理</h2>
         </div>
         
         <div className="overflow-y-auto p-2 space-y-1">
           {curves.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-slate-500 text-xs italic">暂无曲线</p>
-            </div>
+            <div className="p-8 text-center text-slate-500 text-xs italic">等待数据录入...</div>
           ) : (
             curves.map((curve) => (
-              <div 
-                key={curve.id}
-                className="group flex flex-col gap-1 p-2 bg-slate-800/40 hover:bg-slate-800 border border-transparent hover:border-slate-700 rounded-lg transition-all"
-              >
+              <div key={curve.id} className="group flex flex-col gap-1 p-2 bg-slate-800/40 hover:bg-slate-800 border border-transparent hover:border-slate-700 rounded-lg transition-all">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: curve.color }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-slate-200 text-sm font-medium truncate">{curve.name}</p>
-                    <p className="text-slate-500 text-[10px] uppercase">{curve.points.length} 采样点</p>
+                    <p className="text-slate-500 text-[10px] uppercase">{curve.points.length} 点</p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleFit(curve)} 
-                      title="拟合 z = f(y)" 
-                      className="p-1.5 text-sky-400 hover:text-sky-300"
-                    >
+                    <button onClick={() => handleFit(curve)} title="空间平面拟合" className="p-1.5 text-sky-400 hover:text-sky-300">
                       <Sigma className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={() => toggleGradient(curve)} 
-                      title="开启颜色渐变" 
-                      className={`p-1.5 transition-colors ${curve.gradientEnabled ? 'text-amber-400' : 'text-slate-400 hover:text-white'}`}
-                    >
+                    <button onClick={() => toggleGradient(curve)} title="色彩渐变" className={`p-1.5 ${curve.gradientEnabled ? 'text-amber-400' : 'text-slate-400 hover:text-white'}`}>
                       <Palette className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={() => onToggleVisibility(curve.id)} 
-                      className="p-1.5 text-slate-400 hover:text-white"
-                    >
+                    <button onClick={() => onToggleVisibility(curve.id)} className="p-1.5 text-slate-400 hover:text-white">
                       {curve.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
-                    <button 
-                      onClick={() => onRemoveCurve(curve.id)} 
-                      className="p-1.5 text-rose-400/70 hover:text-rose-400"
-                    >
+                    <button onClick={() => onRemoveCurve(curve.id)} className="p-1.5 text-rose-400/70 hover:text-rose-400">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 {curve.fit && (
                   <div className="mt-1 px-3 py-1 bg-slate-900/50 rounded border border-slate-700/50">
-                    <div className="flex items-center gap-2 text-sky-300 text-[10px] font-mono">
+                    <div className="flex items-center gap-2 text-sky-300 text-[9px] font-mono leading-tight">
                       <FunctionSquare className="w-3 h-3" />
                       <span>{curve.fit.equation}</span>
                     </div>
@@ -173,8 +151,8 @@ const Sidebar: React.FC<SidebarProps> = ({ curves, onAddCurve, onRemoveCurve, on
       
       <div className="bg-sky-900/20 backdrop-blur-sm border border-sky-500/20 rounded-xl p-3 shadow-xl">
         <p className="text-sky-300/80 text-[10px] leading-relaxed">
-          <span className="font-bold uppercase tracking-widest text-[9px] block mb-1">提示</span>
-          使用 <Palette className="inline w-3 h-3 mx-1"/> 开启顺序色彩渐变（从原色渐变为补色）。
+          <span className="font-bold uppercase tracking-widest text-[9px] block mb-1">最佳拟合平面</span>
+          系统会自动通过 PCA 寻找点集的重心和空间平面，并在该平面上拟合抛物线轨迹。
         </p>
       </div>
     </div>
